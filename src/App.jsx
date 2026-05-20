@@ -78,7 +78,7 @@ export default function App() {
         setCity(user.city);
 
         fetch(
-          `http://127.0.0.1:8000/user/${user.id}`
+          `https://ecoai-backend-yawl.onrender.com/user/${user.id}`
         )
           .then((res) => res.json())
           .then((data) => {
@@ -142,7 +142,7 @@ export default function App() {
         try {
 
           const response = await fetch(
-            "http://127.0.0.1:8000/register",
+            "https://ecoai-backend-yawl.onrender.com/register",
             {
               method: "POST",
 
@@ -411,7 +411,7 @@ export default function App() {
 
         const response =
           await fetch(
-            "http://127.0.0.1:8000/analyze",
+            "https://ecoai-backend-yawl.onrender.com/analyze",
             {
               method: "POST",
               body: formData,
@@ -447,7 +447,7 @@ export default function App() {
         );
 
         setDetectedImage(
-          "http://127.0.0.1:8000/" +
+          "https://ecoai-backend-yawl.onrender.com/" +
           result.detected_image
         );
 
@@ -553,7 +553,7 @@ export default function App() {
 
         const response =
           await fetch(
-            "http://127.0.0.1:8000/analyze",
+            "https://ecoai-backend-yawl.onrender.com/analyze",
             {
               method: "POST",
               body: formData,
@@ -589,7 +589,7 @@ export default function App() {
         );
 
         setDetectedImage(
-          "http://127.0.0.1:8000/" +
+          "https://ecoai-backend-yawl.onrender.com/" +
           result.detected_image
         );
 

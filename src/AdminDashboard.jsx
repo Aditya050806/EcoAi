@@ -34,7 +34,7 @@ export default function AdminDashboard({ goBack}) {
 
     const fetchReports = () => {
   
-      fetch("http://127.0.0.1:8000/reports")
+      fetch("https://ecoai-backend-yawl.onrender.com/reports")
   
         .then((res) => res.json())
   
@@ -72,7 +72,7 @@ export default function AdminDashboard({ goBack}) {
     try {
   
       await fetch(
-        `http://127.0.0.1:8000/clean/${id}`,
+        `https://ecoai-backend-yawl.onrender.com/clean/${id}`,
         {
           method: "PUT",
         }
@@ -113,7 +113,7 @@ export default function AdminDashboard({ goBack}) {
   
       await fetch(
   
-        `http://127.0.0.1:8000/status/${id}`,
+        `https://ecoai-backend-yawl.onrender.com/status/${id}`,
   
         {
           method: "PUT",
@@ -281,7 +281,7 @@ const totalPlastic =
 
             {/* IMAGE */}
             <img
-              src={`http://127.0.0.1:8000/${report.image}`}
+              src={`https://ecoai-backend-yawl.onrender.com/${report.image}`}
               alt="waste"
               className="w-full h-72 object-cover"
             />
