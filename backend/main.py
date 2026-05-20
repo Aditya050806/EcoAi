@@ -48,16 +48,16 @@ async def update_status(
 # ==========================
 # CORS
 # ==========================
+from fastapi.middleware.cors import CORSMiddleware
+
 app.add_middleware(
-
     CORSMiddleware,
-
-    allow_origins=["*"],
-
+    allow_origins=[
+        "http://localhost:5173",
+        "https://ecoai-frontend.onrender.com"
+    ],
     allow_credentials=True,
-
     allow_methods=["*"],
-
     allow_headers=["*"],
 
 )
