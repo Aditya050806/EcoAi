@@ -1,127 +1,56 @@
 from ultralytics import YOLO
 import cv2
 import os
-import random
+import time
 
-# LOAD MODEL
 model = YOLO("best.pt")
-
-# CLASS NAMES
-CLASS_NAMES = [
-    "plastic",
-    "metal",
-    "organic"
-]
 
 def analyze_waste(image_path):
 
-    # RUN YOLO
     results = model(image_path)
 
     result = results[0]
 
-    # READ IMAGE
-    image = cv2.imread(image_path)
+    names = model.names
 
     plastic = 0
     metal = 0
     organic = 0
 
-    # DETECTION LOOP
+    total = len(result.boxes)
+
     for box in result.boxes:
 
-        cls_id = int(box.cls[0])
+        cls = int(box.cls[0])
 
-        class_name = CLASS_NAMES[cls_id]
+        label = names[cls]
 
-        confidence = float(box.conf[0])
-
-        # BOX COORDINATES
-        x1, y1, x2, y2 = map(
-            int,
-            box.xyxy[0]
-        )
-
-        # RANDOM COLORS
-        color = (
-            random.randint(0,255),
-            random.randint(0,255),
-            random.randint(0,255)
-        )
-
-        # DRAW BOX
-        cv2.rectangle(
-            image,
-            (x1, y1),
-            (x2, y2),
-            color,
-            3
-        )
-
-        # LABEL
-        label = f"{class_name} {confidence:.2f}"
-
-        cv2.putText(
-            image,
-            label,
-            (x1, y1 - 10),
-            cv2.FONT_HERSHEY_SIMPLEX,
-            0.7,
-            color,
-            2
-        )
-
-        # COUNTS
-        if class_name == "plastic":
+        if label == "plastic":
             plastic += 1
 
-        elif class_name == "metal":
+        elif label == "metal":
             metal += 1
 
-        elif class_name == "organic":
+        elif label == "organic":
             organic += 1
 
-    # TOTAL
-    total = plastic + metal + organic
+    if total > 0:
 
-    if total == 0:
-        total = 1
+        plastic = round((plastic / total) * 100, 2)
 
-    # PERCENTAGES
-    plastic_percent = round(
-        (plastic / total) * 100,
-        2
-    )
+        metal = round((metal / total) * 100, 2)
 
-    metal_percent = round(
-        (metal / total) * 100,
-        2
-    )
+        organic = round((organic / total) * 100, 2)
 
-    organic_percent = round(
-        (organic / total) * 100,
-        2
-    )
+    plotted = result.plot()
 
-    # SAVE DETECTED IMAGE
-    detected_path = (
-        "uploads/detected_" +
-        os.path.basename(image_path)
-    )
+    detected_path = f"uploads/detected_{int(time.time())}.png"
 
-    cv2.imwrite(
-        detected_path,
-        image
-    )
+    cv2.imwrite(detected_path, plotted)
 
     return {
-
-        "plastic": plastic_percent,
-
-        "metal": metal_percent,
-
-        "organic": organic_percent,
-
+        "plastic": plastic,
+        "metal": metal,
+        "organic": organic,
         "detected_image": detected_path
-
     }

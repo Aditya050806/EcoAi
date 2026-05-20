@@ -1,28 +1,45 @@
-from sqlalchemy import (
-    create_engine,
-    Column,
-    Integer,
-    String,
-    Float,
-    ForeignKey
-)
-
+from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy import Column, Integer, String, Float
+
 from sqlalchemy.orm import sessionmaker
 
+# ==========================
+# DATABASE URL
+# ==========================
 DATABASE_URL = "sqlite:///./eco.db"
 
+# ==========================
+# ENGINE
+# ==========================
 engine = create_engine(
+
     DATABASE_URL,
+
     connect_args={"check_same_thread": False}
+
 )
 
-SessionLocal = sessionmaker(bind=engine)
+# ==========================
+# SESSION
+# ==========================
+SessionLocal = sessionmaker(
 
+    autocommit=False,
+
+    autoflush=False,
+
+    bind=engine
+
+)
+
+# ==========================
+# BASE
+# ==========================
 Base = declarative_base()
 
 # ==========================
-# USERS TABLE
+# USER TABLE
 # ==========================
 class User(Base):
 
@@ -36,12 +53,12 @@ class User(Base):
 
     points = Column(Integer, default=0)
 
-    reports_count = Column(Integer, default=0)
+    reports = Column(Integer, default=0)
 
-    garbage_reported = Column(Float, default=0)
+    garbage = Column(Integer, default=0)
 
 # ==========================
-# REPORTS TABLE
+# REPORT TABLE
 # ==========================
 class Report(Base):
 
@@ -49,7 +66,7 @@ class Report(Base):
 
     id = Column(Integer, primary_key=True, index=True)
 
-    user_id = Column(Integer, ForeignKey("users.id"))
+    user_id = Column(Integer)
 
     image_path = Column(String)
 
@@ -59,8 +76,17 @@ class Report(Base):
 
     organic = Column(Float)
 
+    latitude = Column(String)
+
+    longitude = Column(String)
+
     location = Column(String)
 
+    status = Column(String, default="Pending")
+
+# ==========================
+# CREATE DATABASE
+# ==========================
 Base.metadata.create_all(bind=engine)
 
 print("Database Created Successfully")

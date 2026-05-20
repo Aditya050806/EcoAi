@@ -1,28 +1,46 @@
 import { useState, useEffect } from "react";
+import AdminDashboard from "./AdminDashboard";
 
 export default function App() {
 
   // ==========================
   // STATES
   // ==========================
+
   const [selectedImage, setSelectedImage] = useState(null);
+
   const [capturedBlob, setCapturedBlob] = useState(null);
 
+  const [detectedImage, setDetectedImage] = useState("");
+
   const [loggedIn, setLoggedIn] = useState(false);
+
   const [showLogin, setShowLogin] = useState(false);
 
+  const [showAdmin, setShowAdmin] = useState(false);
+
   const [userName, setUserName] = useState("");
+
   const [city, setCity] = useState("");
 
+  const [latitude, setLatitude] = useState("");
+
+  const [longitude, setLongitude] = useState("");
+
   const [plastic, setPlastic] = useState(0);
+
   const [metal, setMetal] = useState(0);
+
   const [organic, setOrganic] = useState(0);
 
   const [points, setPoints] = useState(0);
+
   const [reports, setReports] = useState(0);
+
   const [garbage, setGarbage] = useState(0);
 
   const [cameraOn, setCameraOn] = useState(false);
+
   const [stream, setStream] = useState(null);
 
   // ==========================
@@ -30,7 +48,22 @@ export default function App() {
   // ==========================
   useEffect(() => {
 
-    const savedUser = localStorage.getItem("ecoUser");
+    const savedUser =
+      localStorage.getItem("ecoUser");
+
+    const savedLat =
+      localStorage.getItem("latitude");
+
+    const savedLng =
+      localStorage.getItem("longitude");
+
+    if (savedLat) {
+      setLatitude(savedLat);
+    }
+
+    if (savedLng) {
+      setLongitude(savedLng);
+    }
 
     if (savedUser) {
 
@@ -44,8 +77,9 @@ export default function App() {
 
         setCity(user.city);
 
-        // FETCH DASHBOARD
-        fetch(`http://127.0.0.1:8000/user/${user.id}`)
+        fetch(
+          `http://127.0.0.1:8000/user/${user.id}`
+        )
           .then((res) => res.json())
           .then((data) => {
 
@@ -57,7 +91,9 @@ export default function App() {
 
           })
           .catch((err) => {
+
             console.log(err);
+
           });
 
       }
@@ -81,7 +117,27 @@ export default function App() {
 
     navigator.geolocation.getCurrentPosition(
 
-      async () => {
+      async (position) => {
+
+        const lat =
+          position.coords.latitude;
+
+        const long =
+          position.coords.longitude;
+
+        setLatitude(lat);
+
+        setLongitude(long);
+
+        localStorage.setItem(
+          "latitude",
+          lat
+        );
+
+        localStorage.setItem(
+          "longitude",
+          long
+        );
 
         try {
 
@@ -91,7 +147,8 @@ export default function App() {
               method: "POST",
 
               headers: {
-                "Content-Type": "application/json",
+                "Content-Type":
+                  "application/json",
               },
 
               body: JSON.stringify({
@@ -101,11 +158,9 @@ export default function App() {
             }
           );
 
-          const data = await response.json();
+          const data =
+            await response.json();
 
-          console.log("REGISTER RESPONSE:", data);
-
-          // SAVE USER
           localStorage.setItem(
             "ecoUser",
             JSON.stringify({
@@ -129,7 +184,9 @@ export default function App() {
 
           console.log(error);
 
-          alert("Backend connection failed");
+          alert(
+            "Backend connection failed"
+          );
 
         }
 
@@ -137,7 +194,9 @@ export default function App() {
 
       () => {
 
-        alert("Please allow location access");
+        alert(
+          "Please allow location access"
+        );
 
       }
 
@@ -171,6 +230,16 @@ export default function App() {
   // ==========================
   const startCamera = async () => {
 
+    if (!loggedIn) {
+
+      alert("Please login first");
+
+      setShowLogin(true);
+
+      return;
+
+    }
+
     try {
 
       const mediaStream =
@@ -185,11 +254,15 @@ export default function App() {
 
       setTimeout(() => {
 
-        const video = document.getElementById("video");
+        const video =
+          document.getElementById(
+            "video"
+          );
 
         if (video) {
 
-          video.srcObject = mediaStream;
+          video.srcObject =
+            mediaStream;
 
           video.play();
 
@@ -201,7 +274,9 @@ export default function App() {
 
       console.log(error);
 
-      alert("Camera permission denied");
+      alert(
+        "Camera permission denied"
+      );
 
     }
 
@@ -212,21 +287,37 @@ export default function App() {
   // ==========================
   const captureImage = () => {
 
-    const video = document.getElementById("video");
+    const video =
+      document.getElementById(
+        "video"
+      );
 
-    const canvas = document.createElement("canvas");
+    const canvas =
+      document.createElement(
+        "canvas"
+      );
 
     canvas.width = video.videoWidth;
 
     canvas.height = video.videoHeight;
 
-    const ctx = canvas.getContext("2d");
+    const ctx =
+      canvas.getContext("2d");
 
     ctx.drawImage(video, 0, 0);
 
     canvas.toBlob((blob) => {
 
-      const imageUrl = URL.createObjectURL(blob);
+      if (!blob) {
+
+        alert("Image capture failed");
+
+        return;
+
+      }
+
+      const imageUrl =
+        URL.createObjectURL(blob);
 
       setSelectedImage(imageUrl);
 
@@ -234,10 +325,11 @@ export default function App() {
 
     }, "image/png");
 
-    // STOP CAMERA
-    stream.getTracks().forEach((track) =>
-      track.stop()
-    );
+    stream
+      .getTracks()
+      .forEach((track) =>
+        track.stop()
+      );
 
     setCameraOn(false);
 
@@ -246,178 +338,303 @@ export default function App() {
   // ==========================
   // UPLOAD CAPTURED IMAGE
   // ==========================
-  const uploadCapturedImage = async () => {
+  const uploadCapturedImage =
+    async () => {
 
-    if (!capturedBlob) {
+      if (!loggedIn) {
 
-      alert("No image captured");
+        alert("Please login first");
 
-      return;
+        setShowLogin(true);
 
-    }
+        return;
 
-    const userData =
-      localStorage.getItem("ecoUser");
+      }
 
-    if (!userData) {
+      if (!capturedBlob) {
 
-      alert("Please login first");
+        alert("No image captured");
 
-      return;
+        return;
 
-    }
+      }
 
-    const user = JSON.parse(userData);
+      const userData =
+        localStorage.getItem(
+          "ecoUser"
+        );
 
-    console.log("USER:", user);
+      if (!userData) {
 
-    if (!user.id) {
+        alert(
+          "Please login first"
+        );
 
-      alert("Invalid session. Login again.");
+        return;
 
-      return;
+      }
 
-    }
+      const user =
+        JSON.parse(userData);
 
-    const formData = new FormData();
+      const savedLat =
+        localStorage.getItem("latitude");
 
-    formData.append(
-      "user_id",
-      user.id
-    );
+      const savedLng =
+        localStorage.getItem("longitude");
 
-    formData.append(
-      "file",
-      capturedBlob,
-      "captured.png"
-    );
+      const formData =
+        new FormData();
 
-    try {
-
-      const response = await fetch(
-        "http://127.0.0.1:8000/analyze",
-        {
-          method: "POST",
-          body: formData,
-        }
+      formData.append(
+        "user_id",
+        String(user.id)
       );
 
-      const data = await response.json();
+      formData.append(
+        "latitude",
+        savedLat || "0"
+      );
 
-      console.log(data);
+      formData.append(
+        "longitude",
+        savedLng || "0"
+      );
 
-      const result = data.results;
+      formData.append(
+        "file",
+        capturedBlob,
+        `capture_${Date.now()}.png`
+      );
 
-      setPlastic(result.plastic || 0);
+      try {
 
-      setMetal(result.metal || 0);
+        const response =
+          await fetch(
+            "http://127.0.0.1:8000/analyze",
+            {
+              method: "POST",
+              body: formData,
+            }
+          );
 
-      setOrganic(result.organic || 0);
+        const data =
+          await response.json();
 
-      // DASHBOARD UPDATE
-      setPoints(data.stats.points);
+        console.log(data);
 
-      setReports(data.stats.reports);
+        if (!data.results) {
 
-      setGarbage(data.stats.garbage);
+          alert("Upload Failed");
 
-      alert("Image Uploaded Successfully");
+          return;
 
-    } catch (error) {
+        }
 
-      console.log(error);
+        const result =
+          data.results;
 
-      alert("Upload Failed");
+        setPlastic(
+          result.plastic || 0
+        );
 
-    }
+        setMetal(
+          result.metal || 0
+        );
 
-  };
+        setOrganic(
+          result.organic || 0
+        );
+
+        setDetectedImage(
+          "http://127.0.0.1:8000/" +
+          result.detected_image
+        );
+
+        setPoints(
+          data.stats.points
+        );
+
+        setReports(
+          data.stats.reports
+        );
+
+        setGarbage(
+          data.stats.garbage
+        );
+
+        alert(
+          "Image Uploaded Successfully"
+        );
+
+      } catch (error) {
+
+        console.log(error);
+
+        alert("Upload Failed");
+
+      }
+
+    };
 
   // ==========================
   // FILE IMAGE UPLOAD
   // ==========================
-  const handleImageUpload = async (event) => {
+  const handleImageUpload =
+    async (event) => {
 
-    const file = event.target.files[0];
+      if (!loggedIn) {
 
-    if (!file) return;
+        alert("Please login first");
 
-    setSelectedImage(
-      URL.createObjectURL(file)
-    );
+        setShowLogin(true);
 
-    const userData =
-      localStorage.getItem("ecoUser");
+        return;
 
-    if (!userData) {
+      }
 
-      alert("Please login first");
+      const file =
+        event.target.files[0];
 
-      return;
+      if (!file) return;
 
-    }
-
-    const user = JSON.parse(userData);
-
-    console.log("USER:", user);
-
-    if (!user.id) {
-
-      alert("Invalid session. Login again.");
-
-      return;
-
-    }
-
-    const formData = new FormData();
-
-    formData.append(
-      "user_id",
-      user.id
-    );
-
-    formData.append("file", file);
-
-    try {
-
-      const response = await fetch(
-        "http://127.0.0.1:8000/analyze",
-        {
-          method: "POST",
-          body: formData,
-        }
+      setSelectedImage(
+        URL.createObjectURL(file)
       );
 
-      const data = await response.json();
+      const userData =
+        localStorage.getItem(
+          "ecoUser"
+        );
 
-      console.log(data);
+      const savedLat =
+        localStorage.getItem("latitude");
 
-      const result = data.results;
+      const savedLng =
+        localStorage.getItem("longitude");
 
-      setPlastic(result.plastic || 0);
+      if (!userData) {
 
-      setMetal(result.metal || 0);
+        alert(
+          "Please login first"
+        );
 
-      setOrganic(result.organic || 0);
+        return;
 
-      // DASHBOARD UPDATE
-      setPoints(data.stats.points);
+      }
 
-      setReports(data.stats.reports);
+      const user =
+        JSON.parse(userData);
 
-      setGarbage(data.stats.garbage);
+      const formData =
+        new FormData();
 
-      alert("AI Analysis Completed");
+      formData.append(
+        "user_id",
+        String(user.id)
+      );
 
-    } catch (error) {
+      formData.append(
+        "latitude",
+        savedLat || "0"
+      );
 
-      console.log(error);
+      formData.append(
+        "longitude",
+        savedLng || "0"
+      );
 
-      alert("Upload Failed");
+      formData.append(
+        "file",
+        file
+      );
 
-    }
+      try {
 
-  };
+        const response =
+          await fetch(
+            "http://127.0.0.1:8000/analyze",
+            {
+              method: "POST",
+              body: formData,
+            }
+          );
+
+        const data =
+          await response.json();
+
+        console.log(data);
+
+        if (!data.results) {
+
+          alert("Upload Failed");
+
+          return;
+
+        }
+
+        const result =
+          data.results;
+
+        setPlastic(
+          result.plastic || 0
+        );
+
+        setMetal(
+          result.metal || 0
+        );
+
+        setOrganic(
+          result.organic || 0
+        );
+
+        setDetectedImage(
+          "http://127.0.0.1:8000/" +
+          result.detected_image
+        );
+
+        setPoints(
+          data.stats.points
+        );
+
+        setReports(
+          data.stats.reports
+        );
+
+        setGarbage(
+          data.stats.garbage
+        );
+
+        alert(
+          "AI Analysis Completed"
+        );
+
+      } catch (error) {
+
+        console.log(error);
+
+        alert("Upload Failed");
+
+      }
+
+    };
+
+  // ==========================
+  // SHOW ADMIN DASHBOARD
+  // ==========================
+  if (showAdmin) {
+
+    return (
+
+      <AdminDashboard
+        goBack={() =>
+          setShowAdmin(false)
+        }
+      />
+
+    );
+
+  }
 
   return (
 
@@ -445,7 +662,9 @@ export default function App() {
                 placeholder="Enter Name"
                 value={userName}
                 onChange={(e) =>
-                  setUserName(e.target.value)
+                  setUserName(
+                    e.target.value
+                  )
                 }
                 className="w-full p-4 border rounded-2xl"
               />
@@ -455,7 +674,9 @@ export default function App() {
                 placeholder="Enter City"
                 value={city}
                 onChange={(e) =>
-                  setCity(e.target.value)
+                  setCity(
+                    e.target.value
+                  )
                 }
                 className="w-full p-4 border rounded-2xl"
               />
@@ -491,6 +712,15 @@ export default function App() {
         </div>
 
         <div className="flex gap-4">
+
+          <button
+            onClick={() =>
+              setShowAdmin(true)
+            }
+            className="px-5 py-3 bg-black text-white rounded-2xl"
+          >
+            Admin Dashboard
+          </button>
 
           {!loggedIn ? (
 
@@ -620,7 +850,7 @@ export default function App() {
 
           </div>
 
-          {/* PREVIEW */}
+          {/* IMAGE PREVIEW */}
           {selectedImage && (
 
             <div className="mt-6">
@@ -641,7 +871,9 @@ export default function App() {
             <div className="flex justify-center mt-5">
 
               <button
-                onClick={uploadCapturedImage}
+                onClick={
+                  uploadCapturedImage
+                }
                 className="px-6 py-3 bg-purple-600 text-white rounded-2xl"
               >
                 Upload For AI Analysis
@@ -651,94 +883,24 @@ export default function App() {
 
           )}
 
-          {/* RESULTS */}
-          <div className="mt-8 space-y-5">
+          {/* AI DETECTED IMAGE */}
+          {detectedImage && (
 
-            {/* PLASTIC */}
-            <div>
+            <div className="mt-8">
 
-              <div className="flex justify-between mb-2">
+              <h2 className="text-2xl font-bold text-center text-emerald-600 mb-4">
+                AI Detection Result
+              </h2>
 
-                <span className="text-xl font-semibold">
-                  Plastic Waste
-                </span>
-
-                <span className="text-xl font-bold text-emerald-600">
-                  {plastic}%
-                </span>
-
-              </div>
-
-              <div className="w-full h-5 bg-gray-200 rounded-full">
-
-                <div
-                  className="h-full bg-emerald-500 rounded-full"
-                  style={{
-                    width: `${plastic}%`,
-                  }}
-                ></div>
-
-              </div>
+              <img
+                src={detectedImage}
+                alt="detected"
+                className="w-full rounded-2xl shadow-2xl border-4 border-emerald-400"
+              />
 
             </div>
 
-            {/* METAL */}
-            <div>
-
-              <div className="flex justify-between mb-2">
-
-                <span className="text-xl font-semibold">
-                  Metal Waste
-                </span>
-
-                <span className="text-xl font-bold text-cyan-600">
-                  {metal}%
-                </span>
-
-              </div>
-
-              <div className="w-full h-5 bg-gray-200 rounded-full">
-
-                <div
-                  className="h-full bg-cyan-500 rounded-full"
-                  style={{
-                    width: `${metal}%`,
-                  }}
-                ></div>
-
-              </div>
-
-            </div>
-
-            {/* ORGANIC */}
-            <div>
-
-              <div className="flex justify-between mb-2">
-
-                <span className="text-xl font-semibold">
-                  Organic Waste
-                </span>
-
-                <span className="text-xl font-bold text-yellow-600">
-                  {organic}%
-                </span>
-
-              </div>
-
-              <div className="w-full h-5 bg-gray-200 rounded-full">
-
-                <div
-                  className="h-full bg-yellow-400 rounded-full"
-                  style={{
-                    width: `${organic}%`,
-                  }}
-                ></div>
-
-              </div>
-
-            </div>
-
-          </div>
+          )}
 
         </div>
 
@@ -761,7 +923,6 @@ export default function App() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 
-          {/* POINTS */}
           <div className="bg-white p-8 rounded-3xl shadow-xl">
 
             <div className="text-5xl mb-4">
@@ -778,7 +939,6 @@ export default function App() {
 
           </div>
 
-          {/* REPORTS */}
           <div className="bg-white p-8 rounded-3xl shadow-xl">
 
             <div className="text-5xl mb-4">
@@ -795,7 +955,6 @@ export default function App() {
 
           </div>
 
-          {/* GARBAGE */}
           <div className="bg-white p-8 rounded-3xl shadow-xl">
 
             <div className="text-5xl mb-4">

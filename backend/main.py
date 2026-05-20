@@ -1,180 +1,127 @@
 from fastapi import FastAPI, UploadFile, File, Form
-from pydantic import BaseModel
-
-from database import (
-    SessionLocal,
-    User,
-    Report
-)
-
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi import Request
+from database import SessionLocal, User, Report
 
 from detect import analyze_waste
 
 import shutil
-import os
 import time
 
+# ==========================
+# FASTAPI
+# ==========================
 app = FastAPI()
+@app.put("/status/{report_id}")
+async def update_status(
 
-# ==========================
-# CREATE UPLOADS FOLDER
-# ==========================
-os.makedirs("uploads", exist_ok=True)
+    report_id: int,
 
+    request: Request
+
+):
+
+    data = await request.json()
+
+    db = SessionLocal()
+
+    report = (
+
+        db.query(Report)
+
+        .filter(Report.id == report_id)
+
+        .first()
+
+    )
+
+    if report:
+
+        report.status = data["status"]
+
+        db.commit()
+
+    return {
+        "message": "Status Updated"
+    }
 # ==========================
-# ALLOW FRONTEND CONNECTION
+# CORS
 # ==========================
 app.add_middleware(
+
     CORSMiddleware,
+
     allow_origins=["*"],
+
     allow_credentials=True,
+
     allow_methods=["*"],
+
     allow_headers=["*"],
+
 )
 
 # ==========================
-# USER MODEL
+# STATIC FILES
 # ==========================
-class UserCreate(BaseModel):
+app.mount(
 
-    name: str
+    "/uploads",
 
-    city: str
+    StaticFiles(directory="uploads"),
+
+    name="uploads"
+
+)
 
 # ==========================
-# REGISTER USER API
+# ROOT
 # ==========================
-@app.post("/register")
-def register_user(user: UserCreate):
-
-    db = SessionLocal()
-
-    new_user = User(
-        name=user.name,
-        city=user.city
-    )
-
-    db.add(new_user)
-
-    db.commit()
-
-    db.refresh(new_user)
+@app.get("/")
+def home():
 
     return {
-
-        "message": "User Registered",
-
-        "user_id": new_user.id,
-
-        "name": new_user.name,
-
-        "city": new_user.city
-
+        "message": "EcoVision AI Backend Running"
     }
 
 # ==========================
-# ANALYZE IMAGE API
+# REGISTER USER
 # ==========================
-from fastapi import Form
+@app.post("/register")
+def register_user(data: dict):
 
-@app.post("/analyze")
-async def analyze_image(
-    user_id: int = Form(...),
-    file: UploadFile = File(...)
-):
-
-    # ==========================
-    # UNIQUE FILE NAME
-    # ==========================
-    unique_filename = (
-        f"{int(time.time())}_{file.filename}"
-    )
-
-    file_path = f"uploads/{unique_filename}"
-
-    # ==========================
-    # SAVE IMAGE
-    # ==========================
-    with open(file_path, "wb") as buffer:
-
-        shutil.copyfileobj(file.file, buffer)
-
-    # ==========================
-    # YOLO ANALYSIS
-    # ==========================
-    result = analyze_waste(file_path)
-
-    # ==========================
-    # DATABASE
-    # ==========================
     db = SessionLocal()
 
-    user = db.query(User).filter(
-        User.id == user_id
-    ).first()
+    user = User(
 
-    # ==========================
-    # USER NOT FOUND
-    # ==========================
-    if not user:
+        name=data["name"],
 
-        return {
-            "message": "User not found"
-        }
+        city=data["city"],
 
-    # ==========================
-    # UPDATE USER STATS
-    # ==========================
-    user.points += 10
+        points=0,
 
-    user.reports_count += 1
+        reports=0,
 
-    user.garbage_reported += 2.5
-
-    # ==========================
-    # SAVE REPORT
-    # ==========================
-    new_report = Report(
-
-        user_id=user.id,
-
-        image_path=file_path,
-
-        plastic=result["plastic"],
-
-        metal=result["metal"],
-
-        organic=result["organic"],
-
-        location=user.city
+        garbage=0
 
     )
 
-    db.add(new_report)
+    db.add(user)
 
     db.commit()
 
     db.refresh(user)
 
-    # ==========================
-    # RETURN RESPONSE
-    # ==========================
     return {
 
-        "message": "Image Uploaded Successfully",
+        "message": "User Registered",
 
-        "results": result,
+        "user_id": user.id,
 
-        "stats": {
+        "name": user.name,
 
-            "points": user.points,
-
-            "reports": user.reports_count,
-
-            "garbage": user.garbage_reported
-
-        }
+        "city": user.city
 
     }
 
@@ -193,7 +140,7 @@ def get_user(user_id: int):
     if not user:
 
         return {
-            "message": "User not found"
+            "error": "User not found"
         }
 
     return {
@@ -206,18 +153,159 @@ def get_user(user_id: int):
 
         "points": user.points,
 
-        "reports": user.reports_count,
+        "reports": user.reports,
 
-        "garbage": user.garbage_reported
+        "garbage": user.garbage
 
     }
 
 # ==========================
-# HOME ROUTE
+# ANALYZE IMAGE
 # ==========================
-@app.get("/")
-def home():
+@app.post("/analyze")
+async def analyze_image(
+
+    user_id: int = Form(...),
+
+    latitude: str = Form(...),
+
+    longitude: str = Form(...),
+
+    file: UploadFile = File(...)
+
+):
+
+    # SAVE IMAGE
+    filename = f"uploads/{int(time.time())}_{file.filename}"
+
+    with open(filename, "wb") as buffer:
+
+        shutil.copyfileobj(file.file, buffer)
+
+    # AI ANALYSIS
+    results = analyze_waste(filename)
+
+    # DATABASE
+    db = SessionLocal()
+
+    user = db.query(User).filter(
+        User.id == user_id
+    ).first()
+
+    if not user:
+
+        return {
+            "error": "User not found"
+        }
+
+    # UPDATE USER STATS
+    user.points += 10
+
+    user.reports += 1
+
+    user.garbage += 5
+
+    # SAVE REPORT
+    report = Report(
+
+        user_id=user_id,
+
+        image_path=filename,
+
+        plastic=results["plastic"],
+
+        metal=results["metal"],
+
+        organic=results["organic"],
+
+        latitude=latitude,
+
+        longitude=longitude,
+
+        location=user.city,
+
+        status="Pending"
+
+    )
+
+    db.add(report)
+
+    db.commit()
 
     return {
-        "message": "EcoVision AI Backend Running"
+
+        "message": "Analysis Complete",
+
+        "results": results,
+
+        "stats": {
+
+            "points": user.points,
+
+            "reports": user.reports,
+
+            "garbage": user.garbage
+
+        }
+
+    }
+
+# ==========================
+# MUNICIPAL REPORTS
+# ==========================
+@app.get("/reports")
+def get_reports():
+
+    db = SessionLocal()
+
+    reports = db.query(Report).all()
+
+    all_reports = []
+
+    for report in reports:
+
+        all_reports.append({
+
+            "id": report.id,
+
+            "image": report.image_path,
+
+            "plastic": report.plastic,
+
+            "metal": report.metal,
+
+            "organic": report.organic,
+
+            "location": report.location,
+
+            "latitude": report.latitude,
+
+            "longitude": report.longitude,
+
+            "status": report.status
+
+        })
+
+    return all_reports
+@app.put("/clean/{report_id}")
+def clean_report(report_id: int):
+
+    db = SessionLocal()
+
+    report = (
+        db.query(Report)
+        .filter(Report.id == report_id)
+        .first()
+    )
+
+    if report:
+
+        report.status = "Cleaned"
+
+        db.commit()
+
+    db.close()
+
+    return {
+        "message": "Updated"
     }
