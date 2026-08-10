@@ -29,7 +29,8 @@ def analyze_waste(image_path):
 
         cls = int(box.cls[0])
 
-        label = names[cls]
+label = names[cls]
+print("Detected Label:", label)
 
         if label == "plastic":
             plastic += 1
