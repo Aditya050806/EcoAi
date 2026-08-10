@@ -28,7 +28,7 @@ def analyze_waste(image_path):
 
     print("All Classes:", names)
 
-   plastic = 100 
+   plastic = 0
     metal = 0
     organic = 0
 
