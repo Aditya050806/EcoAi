@@ -3,8 +3,9 @@ import cv2
 import time
 
 # ==========================
-# LOAD MODEL (ONLY ONCE)
+# LOAD MODEL
 # ==========================
+
 model = YOLO("best.pt")
 model.fuse()
 
@@ -12,6 +13,7 @@ model.fuse()
 # ==========================
 # AI DETECTION
 # ==========================
+
 def analyze_waste(image_path):
 
     results = model.predict(
@@ -28,7 +30,7 @@ def analyze_waste(image_path):
 
     print("All Classes:", names)
 
-   plastic = 0
+    plastic = 0
     metal = 0
     organic = 0
 
