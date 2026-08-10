@@ -15,32 +15,34 @@ def analyze_waste(image_path):
     verbose=False
 )
 
-    result = results[0]
+   result = results[0]
 
-    names = model.names
+names = model.names
 
-    plastic = 0
-    metal = 0
-    organic = 0
+print("All Classes:", names)   # 👈 ADD HERE
 
-    total = len(result.boxes)
+plastic = 0
+metal = 0
+organic = 0
 
-    for box in result.boxes:
+total = len(result.boxes)
 
-        cls = int(box.cls[0])
+for box in result.boxes:
 
-label = names[cls]
-print("Detected Label:", label)
+    cls = int(box.cls[0])
 
-        if label == "plastic":
-            plastic += 1
+    label = names[cls]
 
-        elif label == "metal":
-            metal += 1
+    print("Detected Label:", label)   # 👈 ADD HERE
 
-        elif label == "organic":
-            organic += 1
+    if label == "plastic":
+        plastic += 1
 
+    elif label == "metal":
+        metal += 1
+
+    elif label == "organic":
+        organic += 1
     if total > 0:
 
         plastic = round((plastic / total) * 100, 2)
