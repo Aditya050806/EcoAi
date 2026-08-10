@@ -4,10 +4,16 @@ import os
 import time
 
 model = YOLO("best.pt")
-
+model.fuse()
 def analyze_waste(image_path):
 
-    results = model(image_path)
+   results = model.predict(
+    source=image_path,
+    imgsz=640,
+    conf=0.4,
+    device="cpu",
+    verbose=False
+)
 
     result = results[0]
 
