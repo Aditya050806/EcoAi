@@ -168,11 +168,14 @@ const pendingReports =
   ).length;
 
 const totalPlastic =
-  reports.reduce(
-    (sum, r) =>
-      sum + Number(r.plastic || 0),
-    0
-  );
+  reports.length > 0
+    ? Math.round(
+        reports.reduce(
+          (sum, r) => sum + Number(r.plastic || 0),
+          0
+        ) / reports.length
+      )
+    : 0;
   return (
 
     <div className="min-h-screen bg-gray-100 p-10">
