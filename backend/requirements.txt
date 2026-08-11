@@ -46,3 +46,4 @@ ultralytics==8.4.47
 ultralytics-thop==2.0.19
 urllib3==2.7.0
 uvicorn==0.46.0
+supabase
