@@ -281,7 +281,7 @@ const totalPlastic =
 
             {/* IMAGE */}
             <img
-              src={`https://ecoai-backend-yawl.onrender.com/${report.image}`}
+               src={report.image}
               alt="waste"
               className="w-full h-72 object-cover"
             />
