@@ -266,7 +266,7 @@ async def analyze_image(
         .table("reports")
         .insert({
             "user_id": user_id,
-            "image_url": original_url,
+            "image_url": detected_url,
             "plastic": results["plastic"],
             "metal": results["metal"],
             "organic": results["organic"],
