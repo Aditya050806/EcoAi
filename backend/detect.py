@@ -11,7 +11,7 @@ def analyze_waste(image_path):
 
     results = model.predict(
         source=image_path,
-        imgsz=640,
+        imgsz=416,
         conf=0.4,
         device="cpu",
         verbose=False
