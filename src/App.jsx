@@ -446,9 +446,7 @@ export default function App() {
           result.organic || 0
         );
 
-        setDetectedImage(
-          "https://ecoai-backend-yawl.onrender.com/" +
-          result.detected_image
+setDetectedImage(result.detected_image);
         );
 
         setPoints(
@@ -588,9 +586,7 @@ export default function App() {
           result.organic || 0
         );
 
-        setDetectedImage(
-          "https://ecoai-backend-yawl.onrender.com/" +
-          result.detected_image
+        setDetectedImage(result.detected_image);
         );
 
         setPoints(
