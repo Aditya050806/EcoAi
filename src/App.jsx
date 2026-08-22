@@ -447,7 +447,7 @@ export default function App() {
         );
 
 setDetectedImage(result.detected_image);
-        );
+        
 
         setPoints(
           data.stats.points
@@ -587,7 +587,7 @@ setDetectedImage(result.detected_image);
         );
 
         setDetectedImage(result.detected_image);
-        );
+     
 
         setPoints(
           data.stats.points
